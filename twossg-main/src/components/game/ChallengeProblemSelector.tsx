@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
 import { Problem } from '@/types/game';
 import { getProblemsByDifficulty } from '@/data/problems';
-import { ArrowLeft, ChevronRight, X, Trophy, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ChevronRight, X, Trophy, CheckCircle, Lock } from 'lucide-react';
 
 interface ChallengeProblemSelectorProps {
   difficulty: 'Easy' | 'Medium' | 'Hard';
   completedProblemIds: number[];
+  allCompletedProblemIds: number[]; // All problems completed across all days
   onSelectProblem: (problem: Problem) => void;
   onClose: () => void;
 }
@@ -19,6 +20,7 @@ const difficultyColors = {
 export const ChallengeProblemSelector = ({
   difficulty,
   completedProblemIds,
+  allCompletedProblemIds,
   onSelectProblem,
   onClose,
 }: ChallengeProblemSelectorProps) => {
@@ -68,7 +70,9 @@ export const ChallengeProblemSelector = ({
         <div className="overflow-y-auto max-h-[calc(85vh-80px)] p-4">
           <div className="space-y-2">
             {problems.map((problem, index) => {
-              const isCompleted = completedProblemIds.includes(problem.id);
+              const isCompletedToday = completedProblemIds.includes(problem.id);
+              const isCompletedPreviously = allCompletedProblemIds.includes(problem.id) && !isCompletedToday;
+              const isDisabled = isCompletedToday || isCompletedPreviously;
 
               return (
                 <motion.button
@@ -76,11 +80,13 @@ export const ChallengeProblemSelector = ({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.02 }}
-                  onClick={() => onSelectProblem(problem)}
-                  disabled={isCompleted}
+                  onClick={() => !isDisabled && onSelectProblem(problem)}
+                  disabled={isDisabled}
                   className={`w-full text-left rounded-xl p-4 transition-all group border ${
-                    isCompleted
+                    isCompletedToday
                       ? 'bg-mint/5 border-mint/30 opacity-60 cursor-not-allowed'
+                      : isCompletedPreviously
+                      ? 'bg-muted/20 border-muted/30 opacity-40 cursor-not-allowed'
                       : 'bg-muted/30 border-border hover:bg-muted/50 hover:border-primary/30'
                   }`}
                 >
@@ -91,15 +97,21 @@ export const ChallengeProblemSelector = ({
                         <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
                           {problem.skill}
                         </span>
-                        {isCompleted && (
+                        {isCompletedToday && (
                           <span className="text-xs text-mint flex items-center gap-1 font-medium">
                             <CheckCircle className="w-3.5 h-3.5" />
-                            Đã hoàn thành
+                            Đã hoàn thành hôm nay
+                          </span>
+                        )}
+                        {isCompletedPreviously && (
+                          <span className="text-xs text-muted-foreground flex items-center gap-1 font-medium">
+                            <Lock className="w-3.5 h-3.5" />
+                            Đã làm trước đó
                           </span>
                         )}
                       </div>
                       <h3 className={`font-semibold truncate ${
-                        isCompleted ? 'text-muted-foreground' : 'text-foreground group-hover:text-primary'
+                        isDisabled ? 'text-muted-foreground' : 'text-foreground group-hover:text-primary'
                       } transition-colors`}>
                         {problem.title}
                       </h3>
@@ -107,7 +119,7 @@ export const ChallengeProblemSelector = ({
                         {problem.description}
                       </p>
                     </div>
-                    {!isCompleted && (
+                    {!isDisabled && (
                       <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                     )}
                   </div>

@@ -28,6 +28,7 @@ const Index = () => {
     progress: challengeProgress, 
     startChallenge: startChallengeAsync, 
     markProblemCompleted: markProblemCompletedAsync,
+    resetChallenge: resetChallengeAsync,
     loading: challengeLoading 
   } = useChallengeProgress();
   const [progress, setProgress] = useState<GameProgress>(loadProgress());
@@ -75,6 +76,15 @@ const Index = () => {
     }
     await startChallengeAsync();
     toast.success('🔥 Bắt đầu Thử Thách 20 Ngày!');
+  };
+
+  const handleResetChallenge = async (password: string) => {
+    if (password !== 'SE2005') {
+      toast.error('Mật khẩu không đúng!');
+      return;
+    }
+    await resetChallengeAsync();
+    toast.info('Thử thách đã được reset. Bạn có thể bắt đầu lại!');
   };
 
   const handleStartChallengeProblem = (difficulty: 'Easy' | 'Medium' | 'Hard') => {
@@ -276,6 +286,7 @@ const Index = () => {
           onSaveApiKey={handleSaveApiKey}
           onSelectProblem={() => setGameState(prev => ({ ...prev, screen: 'problemList' }))}
           onStartChallenge={handleStartChallenge}
+          onResetChallenge={handleResetChallenge}
           onStartChallengeProblem={handleStartChallengeProblem}
           onShowLeaderboard={() => setShowLeaderboard(true)}
           onNavigateToAuth={() => navigate('/auth')}
@@ -350,6 +361,13 @@ const Index = () => {
             challengeProgress.dailyChallenges[challengeProgress.currentDay - 1]?.completedProblems[
               currentChallengeDifficulty.toLowerCase() as 'easy' | 'medium' | 'hard'
             ] || []
+          }
+          allCompletedProblemIds={
+            challengeProgress.dailyChallenges.flatMap(day => [
+              ...day.completedProblems.easy,
+              ...day.completedProblems.medium,
+              ...day.completedProblems.hard,
+            ])
           }
           onSelectProblem={handleSelectChallengeProblem}
           onClose={() => setShowProblemSelector(false)}

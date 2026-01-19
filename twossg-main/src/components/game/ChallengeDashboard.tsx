@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { ChallengeProgress, CHALLENGE_RULES, DailyChallenge } from '@/types/challenge';
 import { getChallengeStats } from '@/lib/challengeStore';
+import { CountdownTimer } from './CountdownTimer';
 
 interface ChallengeDashboardProps {
   progress: ChallengeProgress;
@@ -43,6 +44,8 @@ export const ChallengeDashboard = ({
     }
   };
 
+  const isDayComplete = currentDayChallenge?.completed ?? false;
+
   return (
     <div className="space-y-6">
       {/* Challenge Progress Header */}
@@ -51,7 +54,7 @@ export const ChallengeDashboard = ({
         animate={{ opacity: 1, y: 0 }}
         className="glass-card-strong rounded-2xl p-6"
       >
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
               <Flame className="w-6 h-6 text-white" />
@@ -63,9 +66,13 @@ export const ChallengeDashboard = ({
               </p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold text-primary">{formatCurrency(CHALLENGE_RULES.reward)}</p>
-            <p className="text-xs text-muted-foreground">Phần thưởng</p>
+          <div className="flex items-center gap-4">
+            {/* Countdown Timer - only show if day not complete */}
+            {!isDayComplete && <CountdownTimer />}
+            <div className="text-right">
+              <p className="text-2xl font-bold text-primary">{formatCurrency(CHALLENGE_RULES.reward)}</p>
+              <p className="text-xs text-muted-foreground">Phần thưởng</p>
+            </div>
           </div>
         </div>
 

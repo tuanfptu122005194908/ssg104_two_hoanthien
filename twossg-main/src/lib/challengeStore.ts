@@ -13,6 +13,8 @@ const defaultChallengeProgress: ChallengeProgress = {
   dailyChallenges: [],
   activityLogs: [],
   lastActivityDate: null,
+  failed: false,
+  failedReason: undefined,
 };
 
 export const loadChallengeProgress = (): ChallengeProgress => {
@@ -68,6 +70,8 @@ export const startChallenge = (): ChallengeProgress => {
     dailyChallenges: [generateDailyChallenge(1, today)],
     activityLogs: [],
     lastActivityDate: today,
+    failed: false,
+    failedReason: undefined,
   };
   saveChallengeProgress(progress);
   return progress;

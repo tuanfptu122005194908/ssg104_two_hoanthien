@@ -25,6 +25,8 @@ export interface ChallengeProgress {
   dailyChallenges: DailyChallenge[];
   activityLogs: ActivityLog[];
   lastActivityDate: string | null;
+  failed: boolean; // True if user failed to complete a day
+  failedReason?: string; // Reason for failure
 }
 
 export interface ActivityLog {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChallengeProgress } from '@/types/challenge';
-import { Sparkles, Trophy, Key, ExternalLink, Loader2, CheckCircle, AlertCircle, BookOpen, Code2, Users, Brain, Target, Flame, Gift, Calendar, Shield, LogIn, LogOut, User, Crown } from 'lucide-react';
+import { Sparkles, Trophy, Key, ExternalLink, Loader2, CheckCircle, AlertCircle, BookOpen, Code2, Users, Brain, Target, Flame, Gift, Calendar, Shield, LogIn, LogOut, User, Crown, XCircle, RefreshCw, Lock } from 'lucide-react';
 import { validateApiKey } from '@/lib/aiService';
 import { ChallengeGuide } from './ChallengeGuide';
 import { ChallengeDashboard } from './ChallengeDashboard';
@@ -21,6 +21,7 @@ interface StartScreenProps {
   onSaveApiKey: (apiKey: string) => void;
   onSelectProblem: () => void;
   onStartChallenge: () => void;
+  onResetChallenge: (password: string) => void;
   onStartChallengeProblem: (difficulty: 'Easy' | 'Medium' | 'Hard') => void;
   onShowLeaderboard: () => void;
   onNavigateToAuth: () => void;
@@ -39,6 +40,7 @@ export const StartScreen = ({
   onSaveApiKey,
   onSelectProblem,
   onStartChallenge,
+  onResetChallenge,
   onStartChallengeProblem,
   onShowLeaderboard,
   onNavigateToAuth,
@@ -46,13 +48,15 @@ export const StartScreen = ({
   hasApiKey,
   currentApiKey,
   isAuthenticated,
-  userProfile
+  userProfile,
 }: StartScreenProps) => {
   const [apiKey, setApiKey] = useState(currentApiKey || '');
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [showChallengeGuide, setShowChallengeGuide] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetPassword, setResetPassword] = useState('');
 
   const handleSaveApiKey = async () => {
     if (!apiKey.trim()) {
@@ -92,8 +96,73 @@ export const StartScreen = ({
     onStartChallenge();
   };
 
+  const handleResetSubmit = () => {
+    onResetChallenge(resetPassword);
+    setResetPassword('');
+    setShowResetModal(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col sakura-bg">
+      {/* Reset Password Modal */}
+      <AnimatePresence>
+        {showResetModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-background rounded-2xl p-6 max-w-md w-full shadow-2xl border border-border"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                  <Lock className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Nhập Mật Khẩu</h3>
+                  <p className="text-sm text-muted-foreground">Để tham gia lại thử thách</p>
+                </div>
+              </div>
+              <input
+                type="password"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                placeholder="Nhập mật khẩu..."
+                className="w-full px-4 py-3 bg-muted/50 rounded-xl border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none mb-4"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <motion.button
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setResetPassword('');
+                  }}
+                  className="flex-1 py-3 px-4 rounded-xl bg-muted hover:bg-muted/80 font-medium transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Hủy
+                </motion.button>
+                <motion.button
+                  onClick={handleResetSubmit}
+                  disabled={!resetPassword.trim()}
+                  className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-primary to-accent text-white font-medium disabled:opacity-50"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Xác Nhận
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Auth Header */}
       <div className="absolute top-4 right-4 z-10 flex items-center gap-3">
         {isAuthenticated && userProfile ? (
@@ -185,8 +254,57 @@ export const StartScreen = ({
 
       {/* Main Content */}
       <div className="flex-1 container mx-auto px-4 py-6 max-w-5xl -mt-4">
-        {/* Challenge CTA - Always visible if no active challenge */}
-        {!challengeProgress.isActive && (
+        {/* Challenge Failed State */}
+        {challengeProgress.failed && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mb-6"
+          >
+            <motion.div 
+              className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-destructive/10 via-destructive/5 to-orange-500/10 border border-destructive/30 p-6"
+            >
+              <div className="absolute top-0 right-0 w-40 h-40 bg-destructive/10 rounded-full blur-3xl" />
+              
+              <div className="relative flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <motion.div
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-16 h-16 rounded-2xl bg-gradient-to-br from-destructive to-orange-500 flex items-center justify-center shadow-lg shrink-0"
+                  >
+                    <XCircle className="w-8 h-8 text-white" />
+                  </motion.div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertCircle className="w-5 h-5 text-destructive" />
+                      <h3 className="font-bold text-lg text-destructive">Thử Thách Đã Kết Thúc</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {challengeProgress.failedReason || 'Bạn đã không hoàn thành thử thách.'}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Tiến độ: Ngày {challengeProgress.completedDays}/20 • Đã hoàn thành {challengeProgress.completedDays} ngày
+                    </p>
+                  </div>
+                </div>
+                <motion.button
+                  className="bg-gradient-to-r from-primary to-accent text-white font-semibold py-3 px-6 rounded-xl flex items-center gap-2 whitespace-nowrap"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowResetModal(true)}
+                >
+                  <RefreshCw className="w-5 h-5" />
+                  Thử Lại
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* Challenge CTA - Show if no active challenge and not failed */}
+        {!challengeProgress.isActive && !challengeProgress.failed && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
